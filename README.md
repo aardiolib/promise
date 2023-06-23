@@ -58,5 +58,3 @@ myFirstPromise.then(function(successMessage){
 
 return win.loopMessage(); 
 ```
-
-[更多示例](./example/)
