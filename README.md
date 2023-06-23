@@ -13,7 +13,7 @@ npm i @aardiolib/promise
 
 复制扩展库到用户库
 ``` bash
-Xcopy .\node_modules\@aardiolib\promise\ .\lib\promise\ /E /Y
+robocopy .\node_modules\@aardiolib\ .\lib\ /E
 ```
 
 ## 示例

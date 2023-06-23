@@ -1,10 +1,10 @@
 {
   "name": "@aardiolib/promise",
   "version": "1.0.0",
-  "description": "",
+  "description": "promise",
   "publishConfig": {
     "access": "public",
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org/"
   },
   "author": "Runy(2439702727@qq.com)",
   "license": "ISC"
