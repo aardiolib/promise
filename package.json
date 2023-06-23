@@ -8,7 +8,8 @@
   },
   "keywords": [
     "aardio",
-    "promise"
+    "promise",
+    "aardiolib"
   ],
   "author": "Runy(2439702727@qq.com)",
   "license": "ISC"
