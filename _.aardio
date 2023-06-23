@@ -1,0 +1,334 @@
+﻿import win.ui;
+
+var pending = 'pending';
+var	fulfilled = 'fulfilled';
+var	rejected = 'rejected';
+
+class promise{
+  
+	ctor(executor){
+    	
+    	if(type(executor) != type.function){
+        	error(`Promise resolver executor is not a function!`);
+    	};
+    	
+   		this.status = pending;
+		this.value = null;
+		this.reason = null;
+		this.callbacks = ..table.array();
+		
+		this._resolve = function(value) {
+			if(this.status != pending){
+				return ; 
+			}
+			if (isPromise(value)) {
+				value.then(
+					this._resolve,
+					this._reject
+				);
+				return;
+			}
+	
+			this.value = value;
+			this.status = fulfilled;
+	
+			for i,v in ..table.eachIndex(this.callbacks){
+          		this._handler(v)
+        	}
+		}
+	
+		this._reject = function(reason) {
+			
+			if(this.status != pending){
+				return ; 
+			}
+			
+			if (isPromise(reason)) {
+				reason.then(
+					this._resolve,
+					this._reject
+				);
+				return;
+			}
+	
+			this.reason = reason;
+			this.status = rejected;
+			
+			for i,v in ..table.eachIndex(this.callbacks){
+          		this._handler(v)
+        	}
+		}
+	
+		this._handler = function(callback) {
+			var nextResolve,
+				nextReject,
+				onFulfilled,
+				onRejected = ..table.left(callback,4);
+	
+			if (this.status === pending) {
+				..table.push(this.callbacks,callback);
+				return;
+			}
+	
+			if (this.status === fulfilled) {
+				if(type(onFulfilled) == type.function){
+					_form.setTimeout(function(){
+						try{
+							nextResolve(onFulfilled(this.value));
+						}
+						catch(e){
+							nextReject(e);
+						}
+					})
+					
+				}else{
+					nextResolve(this.value);
+				}
+				return;
+			}
+	
+			if (this.status === rejected) {
+				
+				if(type(onRejected) == type.function){
+					_form.setTimeout(function(){
+						try{
+							nextReject(onRejected(this.reason));
+						}
+						catch(e){
+							nextReject(e);
+						}
+					})
+				}else{
+					nextReject(this.reason);
+				}
+			}
+		}
+		
+		try{
+			executor(this._resolve, this._reject);
+		}
+		catch(e){
+			this._reject(e)
+		}
+  	}
+  	
+  	@ {
+  		_type = "promise"
+  	}
+  
+	then = function(onFulfilled, onRejected) {
+		return ..promise(function(nextResolve, nextReject) {
+			this._handler({
+				nextResolve,
+				nextReject,
+				onFulfilled,
+				onRejected
+			});
+		});
+	}
+
+	["catch"] = function(onRejected) {
+		return this.then(null, onRejected);
+	}
+
+	finally = function(onFinally) {
+		return this.then(onFinally, onFinally);
+	}
+	
+}
+
+
+namespace promise{
+	
+	_form = ..win._form(); //用于执行异步与等待
+	
+ 	isPromise = function(p){
+ 		var t,i = type(p);
+ 		return t === type.table && i === "promise"; 
+ 	}
+ 	
+ 	all = function(iterable) {
+		return ..promise(function(resolve, reject) {
+			
+		    var ret = ..table.array();
+		    var count = 0;
+		    
+		    if(!iterable || #iterable < 1){
+				resolve(ret)
+			}
+		    
+		    for i,v in ..table.eachIndex(iterable){
+		        
+          		..promise.resolve(v).then(function(data){
+		            ret[i] = data;
+		            count++;
+		
+		            if (count === #iterable) {
+		                resolve(ret);
+		            }
+		        }, reject);
+        	}
+        	
+		});
+	}
+	
+	allSettled = function(iterable) {
+		return ..promise(function(resolve, reject) {
+		    var ret = ..table.array();
+		    var count = 0;
+		    
+		    if(!iterable || #iterable < 1){
+				resolve(ret)
+			}
+		    
+		    for i,v in ..table.eachIndex(iterable){
+		        
+          		v.then(function(data){
+          			ret[i] = {
+		        		status:fulfilled,
+		        		value:data,
+		        	}
+		        	count++;
+          		},function(err){
+          			ret[i] = {
+		        		status:rejected,
+		        		reason:err
+		        	}
+		        	count++;
+          		}).finally(function(){
+          			if (count === #iterable) {
+		                resolve(ret);
+		            }
+          		})
+		        
+        	}
+        	
+		});
+	}
+	
+	resolve = function(value) {
+		if (isPromise(value) || (type(value) == type.table && type(value.then) == type.function)) {
+			return value;
+		}
+		
+		return ..promise(function(resolve,reject){
+			resolve(value)
+		});
+	}
+	
+	reject = function(value) {
+		if (isPromise(value) || (type(value) == type.table && type(value.then) == type.function)) {
+			return value;
+		}
+		
+		return ..promise(function(resolve,reject){
+			reject(value)
+		});
+	}
+	
+	race = function(iterable) {
+	    return ..promise(function(resolve, reject){
+		    for i,v in ..table.eachIndex(iterable){
+          		..promise.resolve(v).then(resolve, reject);
+        	}
+        	
+	    });
+	}
+	
+	any = function(iterable) {
+	    return ..promise(function(resolve, reject){
+	        var errors = ..table.array();
+	        var isResolve = false;
+	        var count = 0;
+	        
+	        if(!iterable || #iterable < 1){
+				reject(errors)
+			}
+	        
+		    for i,v in ..table.eachIndex(iterable){
+          		v.then(function(data){
+          		    isResolve = true;
+          		    resolve(data);
+          		},function(err){
+          			errors[i] = err;
+          			count++;
+		        }).finally(function(){
+		            if (!isResolve && count === #iterable) {
+		                reject(errors);
+		            }
+          		})
+        	}
+	    });
+	}
+	
+	await = function(p){
+		
+		if(!isPromise(p)){
+			return p;
+		}
+		
+		var result;
+		var isFinally;
+		var reason;
+		
+		p.then(function(data){
+			result = data;
+		}).catch(function(err){
+			reason = err;
+		}).finally(function(){
+			isFinally = true;
+		})
+		
+		_form.wait(function(){
+			return isFinally;
+		})
+		
+		if(p.status == rejected){
+			error(reason);
+		}
+		
+		return result; 
+	}
+	
+	async = function(func){
+		return function(...){
+			var param = {...};
+			return ..promise(function(resolve,reject){
+				_form.setTimeout(function(){
+					try{
+						resolve( func( ..table.left(param,-1) ) );
+					}
+					catch(e){
+						reject(e);
+					}
+				},0);
+			}); 
+		}
+	}
+}
+
+/**intellisense()
+promise = promise 对象表示异步操作的最终完成（或失败）及其结果值。
+promise( = promise 可能处于三种状态之一：未实现、已实现和失败。\npromise 只能从未实现变为已实现，或从未实现变为失败。一旦 promise 完成或失败，promise 的值不得更改。
+promise(.(executor) = @function(resolve,reject){\n //函数将在构造这个新 Promise 对象过程中，被构造函数执行。\n //resolve(value)//当异步操作成功时调用\n //reject(reason)//当异步操作失败时调用\n  __\n})\n
+promise() = !promiseInfo.
+end intellisense**/
+
+/**intellisense(!promiseInfo)
+then( = 返回一个 promise。\n方法接受两个参数：一个用于处理 Promise 成功状态的回调函数和一个可选的用于处理 Promise 失败状态的回调函数。
+then(.(onFulfilled,onRejected) = 方法接受两个参数：一个用于处理 Promise 成功状态的回调函数和一个可选的用于处理 Promise 失败状态的回调函数。
+catch( = 此方法是 then(null, onRejected) 的一种简写形式。
+finally( = 此方法是 then(onFinally, onFinally) 的一种简写形式。\n在 promise 完成时，无论结果是 fulfilled 或者是 rejected，都会执行回调函数。\n这为在 Promise 是否成功完成后都需要执行的代码提供了一种方式。\n这避免了同样的语句需要在 then() 和 catch() 中各写一次的情况。
+end intellisense**/
+
+/**intellisense(promise)
+all( = 参数是包含 Promise 对象的数组，并返回一个新的 Promise 对象。\n这个方法等待所传入的所有 Promise 对象都变为已实现（fulfilled）状态或有一个变为拒绝（rejected）状态时，才会返回最终的 Promise 对象。
+allSettled( = 参数是包含 Promise 对象的数组，并返回一个新的 Promise 对象。\n这个方法等待所传入的所有 Promise 对象都变为已实现（fulfilled）或拒绝（rejected）状态时，才会返回最终的 Promise 对象。\n与 all() 方法不同之处在于，它会等待所有 Promise 对象的状态都被解决或拒绝，而不会在遇到第一个被拒绝的 Promise 对象时立即返回。
+any( = 参数是包含 Promise 对象的数组，并返回一个新的 Promise 对象。\n只要其中的任何一个 Promise 对象变为已解决状态（fulfilled），就会立即返回一个已解决的 Promise 对象，而不关心其他 Promise 对象的状态。\n如果所有的 Promise 对象都变为拒绝状态（rejected），则返回一个拒绝的 Promise 对象。
+race( = 参数是包含 Promise 对象的数组，并返回一个新的 Promise 对象。\n只关注第一个解决或拒绝的 Promise 对象，无论是解决还是拒绝。它会立即返回一个新的 Promise 对象，并将第一个解决或拒绝的 Promise 对象的值或原因作为结果。
+isPromise( = 判断是否为 promise 对象
+await( = 等待 promise 完成，并返回结果
+await(.(promise) = 等待 promise 完成，返回实现时的结果，若 promise 被拒绝则引发错误
+async( = 创建异步函数，异步函数返回值为 promise 对象
+async(.(func) = 创建异步函数，异步函数返回值为 promise 对象
+end intellisense**/

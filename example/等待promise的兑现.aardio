@@ -1,0 +1,34 @@
+import console;
+import promise;
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="aardio form";right=973;bottom=619)
+mainForm.add()
+/*}}*/
+
+mainForm.show();
+
+console.open();
+
+//promise.await() 用于等待一个 Promise 兑现并获取它兑现之后的值。
+//promise.async() 用于定义异步函数，执行异步函数返回 Promise，在异步函数使用 await 不会阻塞程序运行。
+
+var asyncFunc = ..promise.async(function(...){
+	console.log(...)
+	var p = ..promise(function(resolve,reject){
+	    mainForm.setTimeout(function(){
+	    	resolve(3)
+	    },2000)
+	})
+	//等待 Promise 兑现并获取它兑现之后的值。
+	var result = ..promise.await(p);
+	..console.log(result);
+	return "异步函数执行完成"; 
+})
+
+//执行异步函数，并打印返回值
+asyncFunc(2).then(console.log);
+
+..console.log(1);
+
+return win.loopMessage(); 

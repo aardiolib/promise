@@ -1,0 +1,45 @@
+import console;
+import promise;
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="aardio form";right=973;bottom=619)
+mainForm.add()
+/*}}*/
+
+mainForm.show();
+
+console.open();
+
+// 抛出一个错误，大多数时候将调用 catch 方法
+var p1 = ..promise(function(resolve, reject) {
+  error('Uh-oh!')
+});
+
+p1.catch(function(e) {
+  console.log(e); // "Uh-oh!"
+});
+
+// 在异步函数中抛出的错误不会被 catch 捕获到
+var p2 = ..promise(function(resolve, reject) {
+  mainForm.setTimeout(function() {
+    error('Uncaught Exception!');//定时器抛出错误会终止程序
+  }, 1000);
+});
+
+p2.catch(function(e) {
+  console.log(e); // 不会执行
+});
+
+// 在 resolve() 后面抛出的错误会被忽略
+var p3 = ..promise(function(resolve, reject) {
+  resolve();
+  error('Silenced Exception!')
+});
+
+p3.catch(function(e) {
+   console.log(e); // 不会执行
+});
+
+//注意 promise 内抛出错误不会终止程序，只调用被拒绝时调用的函数。
+
+return win.loopMessage(); 

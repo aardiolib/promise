@@ -1,0 +1,54 @@
+import console;
+import promise;
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="aardio form";right=973;bottom=619)
+mainForm.add()
+/*}}*/
+
+mainForm.show();
+console.open();
+
+
+var p1 = ..promise(function(resolve, reject){
+	mainForm.setTimeout(resolve, 1000, 'one');
+});
+var p2 = ..promise(function(resolve, reject){
+	mainForm.setTimeout(reject, 2000, 'two');
+});
+var p3 = ..promise(function(resolve, reject){
+	mainForm.setTimeout(resolve, 3000, 'three');
+});
+var p4 = ..promise(function(resolve, reject){
+	mainForm.setTimeout(reject, 4000, 'four');
+});
+var p5 = ..promise(function(resolve, reject){
+	mainForm.setTimeout(resolve, 5000, 'five');
+});
+
+
+//在所有传入的 Promise 对象都成功解析（resolved）时才会解析，
+..promise.all({p1, p3, p5}).then(console.dump);
+//如果有任何一个 Promise 对象被拒绝（rejected），返回的 Promise 对象将会立即被拒绝，并返回被拒绝的原因。
+..promise.all({p1, p2, p3, p4}).then(console.dump, console.dump);
+
+
+//所有传入的 Promise 对象都解决（resolved）或拒绝（rejected），
+//然后返回一个包含每个 Promise 对象状态的数组。
+..promise.allSettled({p1, p2, p3, p4, p5}).then(console.dump);
+//promise.allSettled() 方法与 promise.all() 方法不同之处在于，它会等待所有 Promise 对象的状态都被解决或拒绝，
+//而不会在遇到第一个被拒绝的 Promise 对象时立即返回。
+
+
+//传入的 Promise 对象中至少有一个被解析（resolved）时就会被解析，
+..promise.any({p1, p2, p3, p4}).then(console.dump, console.dump);
+//如果所有的 Promise 对象都被拒绝，返回的 Promise 对象将会立即被拒绝，并返回一个包含所有被拒绝原因的数组。
+..promise.any({p2, p4}).then(console.dump, console.dump);
+
+
+//返回的 Promise 对象会采用第一个解析或拒绝的结果。
+//如果有多个 Promise 对象同时解析或拒绝，第一个完成的 Promise 对象的结果将被采用。
+..promise.race({p3, p4}).then(console.dump, console.dump);
+
+
+return win.loopMessage();

@@ -1,0 +1,58 @@
+import console;
+import promise;
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="aardio form";right=973;bottom=619)
+mainForm.add()
+/*}}*/
+
+mainForm.show();
+
+console.open();
+
+var p1 = ..promise.resolve("foo").then(function(string) {
+  	// 1. 接收 "foo" 并与 "bar" 拼接，并将其结果做为下一个 resolve 返回。
+    return ..promise(function(resolve, reject) {
+      mainForm.setTimeout(function() {
+        string += 'bar';
+        resolve(string);
+      }, 1);
+    });
+  }).then(function(string) {
+  	// 2. 接收 "foobar", 放入一个异步函数中处理该字符串
+  	// 并将其打印到控制台中，但是不将处理后的字符串返回到下一个。
+    mainForm.setTimeout(function() {
+      string += 'baz';
+      console.log(string);
+    }, 1)
+    return string;
+  }).then(function(string) {
+  	// 3. 打印本节中代码将如何运行的帮助消息，
+  	// 字符串实际上是由上一个回调函数之前的那块异步代码处理的。
+    console.log("Last Then:  oops... didn't bother to instantiate and return " ++
+                "a promise in the prior then so the sequence may be a bit " ++
+                "surprising");
+
+    // 注意 `string` 这时不会存在 'baz'。
+    // 因为这是发生在我们通过 setTimeout 模拟的异步函数中。
+    console.log(string);
+  });
+
+// 日志，按顺序:
+// Last Then: oops... didn't bother to instantiate and return a promise in the prior then so the sequence may be a bit surprising
+// foobar
+// foobarbaz
+
+//等待 Promise 的兑现。
+..promise.await(p1);
+
+//如果函数抛出错误或返回一个拒绝的 Promise，则 then 将返回一个拒绝的 Promise。
+..promise.resolve().then(function(){
+	error('Oh no!')
+}).then(function(){
+ 	console.log('Not called.');
+},function(err){
+	console.log(err);
+});
+
+return win.loopMessage(); 
