@@ -4,13 +4,12 @@ var pending = 'pending';
 var	fulfilled = 'fulfilled';
 var	rejected = 'rejected';
 
+var form = ..win.form();
+form.messageOnly();
+
 class promise{
   
 	ctor(executor){
-    	
-    	if(type(executor) != type.function){
-        	error(`Promise resolver executor is not a function!`);
-    	};
     	
    		this.status = pending;
 		this.value = null;
@@ -21,7 +20,7 @@ class promise{
 			if(this.status != pending){
 				return ; 
 			}
-			if (isPromise(value)) {
+			if (..promise.isPromise(value)) {
 				value.then(
 					this._resolve,
 					this._reject
@@ -43,7 +42,7 @@ class promise{
 				return ; 
 			}
 			
-			if (isPromise(reason)) {
+			if (..promise.isPromise(reason)) {
 				reason.then(
 					this._resolve,
 					this._reject
@@ -60,27 +59,31 @@ class promise{
 		}
 	
 		this._handler = function(callback) {
-			var nextResolve,
-				nextReject,
-				onFulfilled,
-				onRejected = ..table.left(callback,4);
-	
+			if(type(callback) != type.table){
+				return ;
+			}
+			var nextResolve = callback.nextResolve
+			var	nextReject = callback.nextReject
+			var	onFulfilled = callback.onFulfilled
+			var	onRejected = callback.onRejected
+				
 			if (this.status === pending) {
-				..table.push(this.callbacks,callback);
+				..table.push(this.callbacks, callback);
 				return;
 			}
 	
 			if (this.status === fulfilled) {
 				if(type(onFulfilled) == type.function){
-					_form.setTimeout(function(){
+					..promise._form.setTimeout(function(){
 						try{
 							nextResolve(onFulfilled(this.value));
 						}
 						catch(e){
-							nextReject(e);
+							if(type(nextReject) == type.function){
+								nextReject(e);
+							}
 						}
 					})
-					
 				}else{
 					nextResolve(this.value);
 				}
@@ -90,12 +93,14 @@ class promise{
 			if (this.status === rejected) {
 				
 				if(type(onRejected) == type.function){
-					_form.setTimeout(function(){
+					..promise._form.setTimeout(function(){
 						try{
 							nextReject(onRejected(this.reason));
 						}
 						catch(e){
-							nextReject(e);
+							if(type(nextReject) == type.function){
+								nextReject(e);
+							}
 						}
 					})
 				}else{
@@ -105,7 +110,9 @@ class promise{
 		}
 		
 		try{
-			executor(this._resolve, this._reject);
+			if(type(executor) == type.function){
+        		executor(this._resolve, this._reject);
+    		};
 		}
 		catch(e){
 			this._reject(e)
@@ -119,10 +126,10 @@ class promise{
 	then = function(onFulfilled, onRejected) {
 		return ..promise(function(nextResolve, nextReject) {
 			this._handler({
-				nextResolve,
-				nextReject,
-				onFulfilled,
-				onRejected
+				nextResolve:nextResolve,
+				nextReject:nextReject,
+				onFulfilled:onFulfilled,
+				onRejected:onRejected
 			});
 		});
 	}
@@ -138,9 +145,10 @@ class promise{
 }
 
 
+
 namespace promise{
 	
-	_form = ..win._form(); //用于执行异步与等待
+	_form = form;
 	
  	isPromise = function(p){
  		var t,i = type(p);
@@ -281,7 +289,7 @@ namespace promise{
 		
 		_form.wait(function(){
 			return isFinally;
-		})
+		}, null, 10);
 		
 		if(p.status == rejected){
 			error(reason);
@@ -310,7 +318,7 @@ namespace promise{
 /**intellisense()
 promise = promise 对象表示异步操作的最终完成（或失败）及其结果值。
 promise( = promise 可能处于三种状态之一：未实现、已实现和失败。\npromise 只能从未实现变为已实现，或从未实现变为失败。一旦 promise 完成或失败，promise 的值不得更改。
-promise(.(executor) = @function(resolve,reject){\n //函数将在构造这个新 Promise 对象过程中，被构造函数执行。\n //resolve(value)//当异步操作成功时调用\n //reject(reason)//当异步操作失败时调用\n  __\n})\n
+promise(.(executor) = @function(resolve,reject){\n //函数将在构造这个新 Promise 对象过程中，被构造函数执行。\n //resolve(value)//当异步操作成功时调用\n //reject(reason)//当异步操作失败时调用\n __\n})\n
 promise() = !promiseInfo.
 end intellisense**/
 
